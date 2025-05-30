@@ -17,7 +17,14 @@
     function App() {
       const [files, setFiles] = useState([]);
       const [results, setResults] = useState([]);
+      // inputs for file download
+      const [dlFilename, setDlFilename] = useState('');
+      const [dlUrl, setDlUrl] = useState('');
+      const [dlUser, setDlUser] = useState('');
+      const [dlPass, setDlPass] = useState('');
+
       const BACKEND_URL = '/api/decrypt'; // update with actual backend URL
+      const DOWNLOAD_URL = '/api/download';
 
       const handleFileChange = (e) => {
         setFiles(Array.from(e.target.files));
@@ -40,11 +47,75 @@
         }
       };
 
+      const handleDownload = async () => {
+        try {
+          const res = await fetch(DOWNLOAD_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              filename: dlFilename,
+              url: dlUrl,
+              user: dlUser,
+              pass: dlPass
+            })
+          });
+          if (!res.ok) throw new Error('Request failed');
+          const blob = await res.blob();
+          const href = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = href;
+          a.download = dlFilename || 'download';
+          a.style.display = 'none';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(href);
+        } catch (err) {
+          console.error(err);
+          alert('Download failed');
+        }
+      };
+
       return (
         <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
           <h1>Decrypt Files</h1>
           <input type="file" multiple onChange={handleFileChange} />
           <button onClick={handleSubmit}>Submit</button>
+          <hr />
+          <h2>Download File</h2>
+          <div style={{ marginBottom: '10px' }}>
+            <input
+              type="text"
+              placeholder="Filename"
+              value={dlFilename}
+              onChange={(e) => setDlFilename(e.target.value)}
+            />
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <input
+              type="text"
+              placeholder="URL"
+              value={dlUrl}
+              onChange={(e) => setDlUrl(e.target.value)}
+            />
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <input
+              type="text"
+              placeholder="User"
+              value={dlUser}
+              onChange={(e) => setDlUser(e.target.value)}
+            />
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <input
+              type="password"
+              placeholder="Pass"
+              value={dlPass}
+              onChange={(e) => setDlPass(e.target.value)}
+            />
+          </div>
+          <button onClick={handleDownload}>Download</button>
           {results.length > 0 && (
             <div>
               <h2>Decrypted Files</h2>
