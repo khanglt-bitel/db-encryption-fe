@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Decrypt Files</title>
+  <!-- React and Babel from CDN -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState } = React;
+
+    function App() {
+      const [files, setFiles] = useState([]);
+      const [results, setResults] = useState([]);
+      const BACKEND_URL = '/api/decrypt'; // update with actual backend URL
+
+      const handleFileChange = (e) => {
+        setFiles(Array.from(e.target.files));
+      };
+
+      const handleSubmit = async () => {
+        const formData = new FormData();
+        files.forEach((f, idx) => formData.append('files', f));
+        try {
+          const res = await fetch(BACKEND_URL, {
+            method: 'POST',
+            body: formData
+          });
+          if (!res.ok) throw new Error('Request failed');
+          const data = await res.json();
+          setResults(data.decryptFiles || []);
+        } catch (err) {
+          console.error(err);
+          alert('Upload failed');
+        }
+      };
+
+      return (
+        <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
+          <h1>Decrypt Files</h1>
+          <input type="file" multiple onChange={handleFileChange} />
+          <button onClick={handleSubmit}>Submit</button>
+          {results.length > 0 && (
+            <div>
+              <h2>Decrypted Files</h2>
+              <ul>
+                {results.map((f, idx) => (
+                  <li key={idx}>
+                    <strong>{f.fileName}</strong>
+                    <pre>{f.fileContent}</pre>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
